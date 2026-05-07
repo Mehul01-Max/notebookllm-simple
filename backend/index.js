@@ -1,4 +1,3 @@
-import "pdf-parse";
 import "dotenv/config";
 import express from "express";
 import { OpenAI } from "openai";
@@ -100,8 +99,10 @@ app.post("/chat", async (req, res) => {
   res.json({ answer });
 })
 
-app.listen(3000, () => {
-  console.log("listening to port 3000");
-});
+if (!process.env.VERCEL) {
+  app.listen(3000, () => {
+    console.log("listening to port 3000");
+  });
+}
 
 export default app;
