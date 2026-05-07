@@ -6,9 +6,10 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import multer from "multer";
+import os from "os";
 
 const app = express();
-const upload = multer({ dest: "uploads/" });
+const upload = multer({ dest: os.tmpdir() });
 app.use(express.json());
 app.use(cors({}));
 
@@ -101,3 +102,5 @@ app.post("/chat", async (req, res) => {
 app.listen(3000, () => {
   console.log("listening to port 3000");
 });
+
+export default app;
