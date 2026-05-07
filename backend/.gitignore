@@ -2,8 +2,6 @@ node_modules
 
 .env
 
-package-lock.json
-
 uploads
 
 file.pdf
