@@ -7,6 +7,7 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import multer from "multer";
 import os from "os";
+import { retrieveWithCorrectiveRAG } from "./correctiveRag.js";
 
 const app = express();
 const upload = multer({ dest: os.tmpdir() });
@@ -55,8 +56,6 @@ async function indexing(filePath) {
 
 
 async function retrival(userQuery) {
-
-
   const vectorStore = await QdrantVectorStore.fromExistingCollection(
     embeddings,
     {
@@ -66,17 +65,13 @@ async function retrival(userQuery) {
     },
   );
 
-  const retrival = await vectorStore.asRetriever({
-    k: 3,
-  });
-
-  const searchedChunks = await retrival.invoke(userQuery);
+  const { chunks, traceMarkdown } = await retrieveWithCorrectiveRAG(userQuery, vectorStore, openai);
 
   messages.push({
     role: 'user', content: `
         Use the following pieces of context to answer the question. If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 
-        Context: ${JSON.stringify(searchedChunks)}
+        Context: ${JSON.stringify(chunks)}
         Question: ${userQuery}`
   });
 
@@ -84,7 +79,9 @@ async function retrival(userQuery) {
     model: "openai/gpt-oss-20b:free",
     messages: messages,
   });
-  return response.choices[0].message.content;
+  
+  const finalAnswer = response.choices[0].message.content;
+  return `${traceMarkdown}\n\n${finalAnswer}`;
 }
 
 app.post("/upload", upload.single("file"), async (req, res) => {
